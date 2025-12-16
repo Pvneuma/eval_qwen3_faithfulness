@@ -116,9 +116,6 @@ def generate_with_qwen3():
             f.write(json.dumps(result_data, ensure_ascii=False) + "\n")
             f.flush()
 
-            if i == 0:
-                break
-
 
 if __name__ == "__main__":
     generate_with_qwen3()
