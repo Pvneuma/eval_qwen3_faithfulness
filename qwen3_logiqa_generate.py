@@ -58,7 +58,7 @@ def generate_with_qwen3():
     MODEL_ID = "Qwen/Qwen3-8b"
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_ID,
-        device_map="auto",
+        device_map="cuda:0",
         dtype="auto",
         trust_remote_code=True
     )
