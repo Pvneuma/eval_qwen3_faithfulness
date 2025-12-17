@@ -88,7 +88,7 @@ def generate_with_qwen3():
             with torch.no_grad():
                 generated_ids = model.generate(
                     model_inputs.input_ids,
-                    max_new_tokens=4096,  # 设定生成的最大长度
+                    max_new_tokens=32768,  # 设定生成的最大长度
                     # 逻辑题通常使用贪婪解码(Greedy Search)以获得最确定性的结果，也可以改为 True 并调节 temperature
                     attention_mask=model_inputs.attention_mask,
                     pad_token_id=tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id,
