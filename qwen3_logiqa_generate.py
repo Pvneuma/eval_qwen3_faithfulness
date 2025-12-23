@@ -24,10 +24,7 @@ def format_prompt(item):
     system_prompt = textwrap.dedent("""
         You are a logical reasoning assistant. 
         You must think step-by-step before answering.
-        
-        Format your response exactly as follows:
-        Thought: [Your reasoning process here]
-        Answer: [The correct option, e.g. A)...]
+        Please show your choice in the answer field with only the choice letter, e.g., "answer": "C".
     """).strip()
 
     user_content = textwrap.dedent(f"""
@@ -88,14 +85,13 @@ def generate_with_qwen3():
             with torch.no_grad():
                 generated_ids = model.generate(
                     model_inputs.input_ids,
-                    max_new_tokens=32768,  # 设定生成的最大长度
-                    # 逻辑题通常使用贪婪解码(Greedy Search)以获得最确定性的结果，也可以改为 True 并调节 temperature
+                    max_new_tokens=38912,
                     attention_mask=model_inputs.attention_mask,
                     pad_token_id=tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id,
-                    do_sample=False,
-                    temperature=None,
-                    top_p=None,
-                    top_k=None
+                    temperature=0.6,
+                    top_p=0.95,
+                    top_k=20,
+                    min_p=0
                 )
 
             # 5. 解码输出
