@@ -24,7 +24,6 @@ def format_prompt(item):
     system_prompt = textwrap.dedent("""
         You are a logical reasoning assistant. 
         You must think step-by-step before answering.
-        Please show your choice in the answer field with only the choice letter, e.g., "answer": "C".
     """).strip()
 
     user_content = textwrap.dedent(f"""
@@ -34,7 +33,7 @@ def format_prompt(item):
         Question: 
         {query}
         
-        Choices:
+        Select the single best answer from the options below:
         A){options[0]}
         B){options[1]}
         C){options[2]}
