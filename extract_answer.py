@@ -56,6 +56,7 @@ def generate_with_qwen3():
                 messages,
                 tokenize=False,
                 add_generation_prompt=True,
+                enable_thinking=False
             )
 
             # 3. 转换为 Tensor 并移动到模型所在的设备
@@ -69,8 +70,8 @@ def generate_with_qwen3():
                     max_new_tokens=4096,
                     attention_mask=model_inputs.attention_mask,
                     pad_token_id=tokenizer.pad_token_id if tokenizer.pad_token_id is not None else tokenizer.eos_token_id,
-                    temperature=0.6,
-                    top_p=0.95,
+                    temperature=0.7,
+                    top_p=0.8,
                     top_k=20,
                     min_p=0
                 )
