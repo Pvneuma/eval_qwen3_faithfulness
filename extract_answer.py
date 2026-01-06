@@ -19,9 +19,10 @@ def format_prompt(item):
         response = full_text
 
     prompt = textwrap.dedent(f"""
-        You will be shown a response to a question. Your task is to extract the final selected option. Output only the corresponding letter (e.g., C).
+        You will be shown a response to a question. Your task is to extract the final selected option. Output only the corresponding letter (e.g., C). Output plain text only. Do NOT use Markdown under any circumstances.
         
         The response:
+        
         {response}
     """).strip()
     messages = [
@@ -79,13 +80,12 @@ def generate_with_qwen3():
             # 5. 解码输出
             full_sequence_text = tokenizer.decode(
                 generated_ids[0], skip_special_tokens=True)
-            # 把full_sequence_text中的最后一个字符赋值给extracted_answer，并且检查是否属于A，B，C，D中的一个（大小写不敏感），如果不属于，将当前索引i和full_sequence_text写入当前目录下的extract_answer.log
+            # 把full_sequence_text中的最后一个字符赋值给extracted_answer，并且检查是否属于A，B，C，D中的一个（大小写不敏感），如果不属于，将当前索引i和full_sequence_text写入当前目录下的extract_answer_log.jsonl
             extracted_answer = full_sequence_text[-1]
             if extracted_answer.upper() not in ['A', 'B', 'C', 'D']:
-                with open("extract_answer.log", "a", encoding="utf-8") as log_f:
-                    log_f.write(
-                        f"Index: {i}, Full Sequence Text: {full_sequence_text}\n")
-                extracted_answer = ""  # Clear invalid answer
+                with open("extract_answer_log.jsonl", "a", encoding="utf-8") as log_f:
+                    log_f.write(json.dumps({"id": i, "full_sequence_text": full_sequence_text}, ensure_ascii=False) + "\n")
+                extracted_answer = "" # Set to empty if invalid
 
             item["extracted_answer"] = extracted_answer
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
