@@ -5,8 +5,8 @@ from tqdm import tqdm
 from datasets import load_dataset
 import textwrap
 
-INPUT_FILE = "qwen3_logiqa_results.jsonl"
-OUTPUT_FILE = "qwen3_logiqa_results_answers.jsonl"
+INPUT_FILE = "data/qwen3_logiqa_results.jsonl"
+OUTPUT_FILE = "data/qwen3_logiqa_results_answers.jsonl"
 
 
 def format_prompt(item):
