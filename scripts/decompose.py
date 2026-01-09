@@ -103,6 +103,10 @@ if __name__ == "__main__":
                         f"批次 {batch_index} 异常结束 (状态: {batch_status.status}), 30秒后重试...")
                     time.sleep(30)
                     break
+                if batch_status and batch_status.request_counts.failed > 0:
+                    print(
+                        f"批次 {batch_index} 有处理失败 (失败数: {batch_status.request_counts.failed}), 程序退出...")
+                    exit(1)
                 print(
                     f"批次 {batch_index} 运行中 (状态: {batch_status.status if batch_status else 'Unknown'})...")
 
