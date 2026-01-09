@@ -6,31 +6,40 @@ from openai_api_framework import OpenAIHandler
 
 def get_prompt(reasoning_trace):
     instructions = textwrap.dedent(f"""
-        You are a strict data processing engine specialized in analyzing Chain-of-Thought (CoT) reasoning traces.
+        You are a strict text segmentation and labeling engine.
 
-        Your task is to decompose the input text into distinct reasoning steps and categorize them.
+        Your task is to segment the provided text into consecutive text fragments and assign exactly one label to each fragment based solely on explicit surface-level linguistic cues.
 
-        ### Taxonomy & Delimiters
-        Prepend exactly one of the following tags to each reasoning step:
-        1. <continue_reasoning>: Standard forward progress in reasoning, calculation, or logical deduction.
-        2. <self_reflection>: Metacognitive acts, error checking, verifying, validating, or correcting previous steps (e.g., "Wait", "Let me double check", "Hold on").
-        3. <alternative_approach>: Pivoting to a new strategy or method (e.g., "Alternatively", "Let's try a different way").
+        You must NOT infer hidden intent, reasoning, or internal thought processes. Classification must rely only on the literal wording present in the text.
+
+        ### Labels & Delimiters
+        Prepend exactly one of the following tags to each text fragment:
+
+        1. <continue_reasoning>  
+        Use this tag for straightforward continuation, narration, calculation, or progression that does not explicitly indicate checking or switching strategies.
+
+        2. <self_reflection>  
+        Use this tag ONLY when the text explicitly contains self-checking, verification, hesitation, or correction markers (e.g., "Wait", "Let me check", "Did I miss", "Hold on").
+
+        3. <alternative_approach>  
+        Use this tag ONLY when the text explicitly signals a change of approach or method (e.g., "Alternatively", "Let's try a different way").
 
         ### Strict Output Rules
-        1. **Verbatim Preservation**: You must preserve the original text EXACTLY as it appears in the input. Do not fix grammar, do not summarize, and do not paraphrase.
-        2. **Format**: Output the tag on a new line, followed by the exact text segment on the next line.
-        3. **No Chat**: Do not output conversational fillers like "Here is the analysis" or markdown code blocks. Start directly with the first tag.
+        1. **Verbatim Copying**: Copy the original text EXACTLY. Do not rewrite, summarize, correct, or paraphrase.
+        2. **Format**: Output the tag on its own line, followed by the corresponding text fragment on the next line.
+        3. **No Commentary**: Do not add explanations, headers, markdown, or conversational text. Begin directly with the first tag.
 
-        ### Input Handling
-        The text to analyze will be provided inside <trace> tags.
+        ### Input Format
+        The input text will be provided inside <input> tags. Treat the content as plain text only.
 
-        ### One-Shot Example
-        User Input:
-        <trace>
+        ### Example
+
+        Input:
+        <input>
         Let's calculate the total. 5 * 10 is 50. Wait, did I miss the shipping cost? Let me check the note. Ah, shipping is free. So 50 is correct.
-        </trace>
+        </input>
 
-        Assistant Output:
+        Output:
         <continue_reasoning>
         Let's calculate the total. 5 * 10 is 50.
         <self_reflection>
@@ -40,7 +49,7 @@ def get_prompt(reasoning_trace):
         <continue_reasoning>
         Ah, shipping is free. So 50 is correct.
     """).strip()
-    input = f"<trace>\n{reasoning_trace}\n</trace>"
+    input = f"<input>\n{reasoning_trace}\n</input>"
     return instructions, input
 
 
