@@ -78,20 +78,19 @@ if __name__ == "__main__":
         handler.create_batch_input_file(
             data_list=batch_data,
             output_file_path=batch_input_file,
-            model="gpt-5-mini",
-            temperature=0.0
+            model="gpt-5-mini"
         )
         while True:
             print(
                 f"正在提交第 {batch_index} 批次 (数据 {i} - {i + len(batch_data)})...")
             batch_id = handler.submit_batch_job(batch_input_file)
             if not batch_id:
-                print("提交失败,60秒后重试...")
-                time.sleep(60)
+                print("提交失败,30秒后重试...")
+                time.sleep(30)
                 continue
 
             while True:
-                time.sleep(60)
+                time.sleep(30)
                 batch_status = handler.check_batch_status(batch_id)
                 if batch_status and batch_status.status == 'completed':
                     print(f"批次 {batch_index} 已完成，准备提交下一批次...")
@@ -101,8 +100,8 @@ if __name__ == "__main__":
                     break
                 elif batch_status and batch_status.status in ['failed', 'expired', 'cancelled']:
                     print(
-                        f"批次 {batch_index} 异常结束 (状态: {batch_status.status}), 60秒后重试...")
-                    time.sleep(60)
+                        f"批次 {batch_index} 异常结束 (状态: {batch_status.status}), 30秒后重试...")
+                    time.sleep(30)
                     break
                 print(
                     f"批次 {batch_index} 运行中 (状态: {batch_status.status if batch_status else 'Unknown'})...")
