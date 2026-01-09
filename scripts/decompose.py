@@ -12,10 +12,10 @@ def get_prompt(reasoning_trace):
 
         ### Taxonomy & Delimiters
         Prepend exactly one of the following tags to each reasoning step:
-        1. <continue_reasoning>: Standard forward progress in reasoning, calculation, or logical deduction.
-        2. <self_reflection>: Metacognitive acts, error checking, verifying, validating, or correcting previous steps (e.g., "Wait", "Let me double check", "Hold on").
-        3. <alternative_approach>: Pivoting to a new strategy or method (e.g., "Alternatively", "Let's try a different way").
-
+        1. <continue_reasoning>: Direct continuation of the previous reasoning steps
+        2. <self_reflection>: Checking, verifying, validating, or correcting previous steps. For example, sentence involving terms like “Wait”, “I need to verify”, etc.
+        3. <alternative_approach>: Considering or suggesting a different approach. For example, sentence involving terms like “Alternatively”, “Let's try a different approach”, etc.
+        
         ### Strict Output Rules
         1. **Verbatim Preservation**: You must preserve the original text EXACTLY as it appears in the input. Do not fix grammar, do not summarize, and do not paraphrase.
         2. **Format**: Output the tag on a new line, followed by the exact text segment on the next line.
@@ -27,18 +27,20 @@ def get_prompt(reasoning_trace):
         ### One-Shot Example
         User Input:
         <trace>
-        Let's calculate the total. 5 * 10 is 50. Wait, did I miss the shipping cost? Let me check the note. Ah, shipping is free. So 50 is correct.
+        Let's solve this step by step. First, we need to calculate the area of the triangle. The base is 6 and height is 4, so the area is (6 * 4) / 2 = 12. Wait, I should verify if these measurements are correct. Yes, the measurements are confirmed. The area is 12 square units. Therefore, the final answer is 12 square units.
         </trace>
 
         Assistant Output:
         <continue_reasoning>
-        Let's calculate the total. 5 * 10 is 50.
+        Let's solve this step by step. First, we need to calculate the area of the triangle.
+        <continue_reasoning>
+        The base is 6 and height is 4, so the area is (6 * 4) / 2 = 12.
         <self_reflection>
-        Wait, did I miss the shipping cost?
+        Wait, I should verify if these measurements are correct.
         <continue_reasoning>
-        Let me check the note.
+        Yes, the measurements are confirmed. The area is 12 square units.
         <continue_reasoning>
-        Ah, shipping is free. So 50 is correct.
+        Therefore, the final answer is 12 square units.
     """).strip()
     input = f"<trace>\n{reasoning_trace}\n</trace>"
     return instructions, input
@@ -70,7 +72,7 @@ if __name__ == "__main__":
             "instructions": instructions
         })
 
-    batch_size = 50
+    batch_size = 100
     for i in range(0, len(data_list), batch_size):
         batch_data = data_list[i:i + batch_size]
         batch_index = i // batch_size
@@ -78,7 +80,8 @@ if __name__ == "__main__":
         handler.create_batch_input_file(
             data_list=batch_data,
             output_file_path=batch_input_file,
-            model="gpt-4o-mini"
+            model="gpt-4o-mini",
+            temperature=0.2
         )
         while True:
             print(
