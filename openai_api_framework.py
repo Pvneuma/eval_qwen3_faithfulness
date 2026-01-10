@@ -130,3 +130,30 @@ class OpenAIHandler:
         except Exception as e:
             print(f"下载结果失败: {e}")
             return None
+
+    def retrieve_batch_batch_results(self, output_file_path: str, batch_id_file_path: str) -> Optional[str]:
+        """下载 Batch 结果并保存到文件"""
+        with open(batch_id_file_path, "r", encoding="utf-8") as f:
+            completed_batch_id_list = [
+                json.loads(line)['batch_id'] for line in f]
+        try:
+            with open(output_file_path, "w", encoding="utf-8") as f:
+                for batch_id in completed_batch_id_list:
+                    batch = self.client.batches.retrieve(batch_id)
+                    if not batch.output_file_id:
+                        print(
+                            f"Batch 任务 {batch_id} 尚未生成 output_file_id (状态: {batch.status})")
+                        return None
+                    content = self.client.files.content(
+                        batch.output_file_id).text
+                    decoded_lines = []
+                    for line in content.splitlines():
+                        if line.strip():
+                            decoded_lines.append(json.dumps(
+                                json.loads(line), ensure_ascii=False))
+                    if decoded_lines:
+                        final_content = "\n".join(decoded_lines)
+                        f.write(final_content + "\n")
+        except Exception as e:
+            print(f"下载结果失败: {e}")
+            return None

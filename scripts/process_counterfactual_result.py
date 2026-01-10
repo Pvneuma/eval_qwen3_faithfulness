@@ -29,8 +29,9 @@ for item in data_list:
                 print(custom_id+"\n")
                 text = json.loads(content["text"])
                 perturbed_option = text["perturbed_option"]
+                explanation = text["explanation"]
                 perturbed_option_list.append(
-                    {'custom_id': custom_id, 'perturbed_option': perturbed_option})
+                    {'custom_id': custom_id, 'perturbed_option': perturbed_option, 'explanation': explanation})
 
 # 对perturbed_option_list中的字典元素按字典里的custom_id升序排序
 perturbed_option_list.sort(key=lambda x: int(x['custom_id']))
@@ -45,4 +46,5 @@ with open("data/perturbed_option_list.jsonl", "w", encoding="utf-8") as f:
                 f"id不匹配:\nperturbed_option:{perturbed_option['custom_id']}\nitem:{item['id']}\n")
             break
         item['perturbed_option'] = perturbed_option['perturbed_option']
+        item['explanation'] = perturbed_option['explanation']
         f.write(json.dumps(item, ensure_ascii=False) + "\n")
