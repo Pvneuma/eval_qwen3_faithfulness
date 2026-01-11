@@ -5,7 +5,7 @@ from tqdm import tqdm
 from datasets import load_dataset, Dataset
 import textwrap
 
-OUTPUT_FILE = "/data/counterfactual/qwen3_logiqa_counterfactual_results.jsonl"
+OUTPUT_FILE = "data/counterfactual/qwen3_logiqa_counterfactual_results.jsonl"
 
 
 def load_LogiQA():
@@ -58,8 +58,6 @@ def generate_with_qwen3():
     )
     tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
     dataset = load_LogiQA()
-    # 显式断言类型以消除 IDE 关于 len() 的类型警告
-    assert isinstance(dataset, Dataset)
 
     # Use 'w' to overwrite or 'a' to append. Open once for efficiency.
     with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
