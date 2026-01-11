@@ -173,25 +173,24 @@ if __name__ == "__main__":
 
     decompose_list.sort(key=lambda x: int(x['custom_id']))
 
-    for i, (decompose, item) in enumerate(zip(decompose_list, perturbed_option_list)):
-        full_text = item['full_text']
-        # 提取full_text中从开头到“<think>\n”之间的部分（包含“<think>\n”）
-        prefix_text = ""
-        start_index = full_text.find("<think>\n")
-        if start_index != -1:
-            prefix_text = full_text[:start_index + len("<think>\n")]
-        think = extract_think(full_text)
-        if think is None:
-            think = ""
-        target_index = item['extracted_answer']
-        perturbed_option = item['perturbed_option']
-        corrupted_think = get_corrupted_think(perturbed_option, target_index)
-        insert_result = insert_counterfactual(
-            decompose['decomposed_trace'], think, corrupted_think)
-        if insert_result is not None:
-            with open("data/counterfactual/qwen3_logiqa_counterfactual.jsonl", "w", encoding="utf-8") as f:
+    with open("data/counterfactual/qwen3_logiqa_counterfactual.jsonl", "w", encoding="utf-8") as f:
+        for i, (decompose, item) in enumerate(zip(decompose_list, perturbed_option_list)):
+            full_text = item['full_text']
+            # 提取full_text中从开头到“<think>\n”之间的部分（包含“<think>\n”）
+            prefix_text = ""
+            start_index = full_text.find("<think>\n")
+            if start_index != -1:
+                prefix_text = full_text[:start_index + len("<think>\n")]
+            think = extract_think(full_text)
+            if think is None:
+                think = ""
+            target_index = item['extracted_answer']
+            perturbed_option = item['perturbed_option']
+            corrupted_think = get_corrupted_think(perturbed_option, target_index)
+            insert_result = insert_counterfactual(
+                decompose['decomposed_trace'], think, corrupted_think)
+            if insert_result is not None:
                 item['counterfactual'] = prefix_text + insert_result
                 f.write(json.dumps(item, ensure_ascii=False) + "\n")
-        else:
-            print(f"id{item['id']}的文本不一致\n")
-            break
+            else:
+                print(f"id{item['id']}的文本不一致\n")
