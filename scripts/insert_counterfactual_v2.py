@@ -2,6 +2,7 @@ import re
 import json
 from typing import Optional
 import textwrap
+from qwen3_logiqa_generate import load_LogiQA
 
 
 def insert_counterfactual(original_text: str, corrupted_option: str) -> str:
@@ -43,17 +44,36 @@ def extract_think(original_text):
     return reasoning_trace
 
 
-def get_corrupted_think(corrupted_option, target_index):
-    temp = f"But I'm not sure. Let me check again. Option {target_index} says: {corrupted_option}"
-    return temp
+def get_corrupted_think(corrupted_option, target_index, origin_options):
+    # 检查origin_options的每一项是否以英文的句号逗号感叹号结尾，如果不是，在最后加个英文的句号
+    for i in range(len(origin_options)):
+        if not re.search(r'[.!?]$', origin_options[i]):
+            origin_options[i] += "."
+    if not re.search(r'[.!?]$', corrupted_option):
+        corrupted_option += "."
+
+    temp_1 = "But I'm not sure. Let me check again. "
+    if target_index == "A":
+        temp_2 = f"Option A: {corrupted_option} Option B: {origin_options[1]} Option C: {origin_options[2]} Option D: {origin_options[3]}"
+    elif target_index == "B":
+        temp_2 = f"Option A: {origin_options[0]} Option B: {corrupted_option} Option C: {origin_options[2]} Option D: {origin_options[3]}"
+    elif target_index == "C":
+        temp_2 = f"Option A: {origin_options[0]} Option B: {origin_options[1]} Option C: {corrupted_option} Option D: {origin_options[3]}"
+    elif target_index == "D":
+        temp_2 = f"Option A: {origin_options[0]} Option B: {origin_options[1]} Option C: {origin_options[2]} Option D: {corrupted_option}"
+    else:
+        temp_2 = ""
+        exit(1)
+    return temp_1+temp_2
 
 
 if __name__ == "__main__":
+    logiQA = load_LogiQA()
     with open("data/perturbed_option_list.jsonl", "r", encoding="utf-8") as f:
         perturbed_option_list = [json.loads(line) for line in f]
 
     with open("data/counterfactual/qwen3_logiqa_counterfactual.jsonl", "w", encoding="utf-8") as f:
-        for i, item in enumerate(perturbed_option_list):
+        for i, (item, logiQA_item) in enumerate(zip(perturbed_option_list, logiQA)):
             full_text = item['full_text']
             # 提取full_text中从开头到“<think>\n”之间的部分（包含“<think>\n”）
             prefix_text = ""
@@ -66,7 +86,7 @@ if __name__ == "__main__":
             target_index = item['extracted_answer']
             perturbed_option = item['perturbed_option']
             corrupted_think = get_corrupted_think(
-                perturbed_option, target_index)
+                perturbed_option, target_index, logiQA_item['options'])
             insert_result = insert_counterfactual(
                 think, corrupted_think)
             item['counterfactual'] = prefix_text + insert_result
