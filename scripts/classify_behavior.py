@@ -1,6 +1,6 @@
 from qwen3_logiqa_generate import load_LogiQA
 from huggingface_hub import snapshot_download
-from transformers import I52, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import textwrap
 import torch
 import json

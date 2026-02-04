@@ -5,37 +5,43 @@ from tqdm import tqdm
 from datasets import load_dataset
 import textwrap
 
-INPUT_FILE = "data/qwen3_logiqa_results.jsonl"
-OUTPUT_FILE = "data/qwen3_logiqa_results_answers.jsonl"
+INPUT_FILE = "data/counterfactual/qwen3_logiqa_counterfactual_results.jsonl"
+OUTPUT_FILE = "data/counterfactual/qwen3_logiqa_counterfactual_results_answers.jsonl"
 
 
 def format_prompt(item):
-    full_text = item['full_text']
-    # 从response中提取位于"</think>"后的全部字符串
-    start_index = full_text.find("</think>")
-    if start_index != -1:
-        response = full_text[start_index + len("</think>"):]
-    else:
-        response = full_text
+    raw_text = item['full_text']
+    start_tag = "</think>"
+    end_tag = "<|im_end|>"
 
+    start_idx = raw_text.find(start_tag)
+
+    if start_idx != -1:
+        # 如果找到了 </think>，从它后面开始截取
+        content = raw_text[start_idx + len(start_tag):]
+        # 如果之后还有 <|im_end|>，则截取到它之前
+        if end_tag in content:
+            content = content[:content.find(end_tag)]
+        response = content.strip()
+
+    sys_prompt = "You will be shown a response to a question. Your task is to extract the final selected option. Output only the corresponding letter (e.g., C). Output plain text only. Do NOT use Markdown under any circumstances."
     prompt = textwrap.dedent(f"""
-        You will be shown a response to a question. Your task is to extract the final selected option. Output only the corresponding letter (e.g., C). Output plain text only. Do NOT use Markdown under any circumstances.
+The response:
         
-        The response:
-        
-        {response}
+{response}
     """).strip()
     messages = [
+        {"role": "system", "content": sys_prompt},
         {"role": "user", "content": prompt}
     ]
     return messages
 
 
 def generate_with_qwen3():
-    MODEL_ID = "Qwen/Qwen3-8b"
+    MODEL_ID = "Qwen/Qwen3-32B"
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_ID,
-        device_map="cuda:0",
+        device_map="auto",
         dtype="auto",
         trust_remote_code=True
     )
@@ -84,8 +90,9 @@ def generate_with_qwen3():
             extracted_answer = full_sequence_text[-1]
             if extracted_answer.upper() not in ['A', 'B', 'C', 'D']:
                 with open("extract_answer_log.jsonl", "a", encoding="utf-8") as log_f:
-                    log_f.write(json.dumps({"id": i, "full_sequence_text": full_sequence_text}, ensure_ascii=False) + "\n")
-                extracted_answer = "" # Set to empty if invalid
+                    log_f.write(json.dumps(
+                        {"id": i, "full_sequence_text": full_sequence_text}, ensure_ascii=False) + "\n")
+                extracted_answer = ""  # Set to empty if invalid
 
             item["extracted_answer"] = extracted_answer
             f.write(json.dumps(item, ensure_ascii=False) + "\n")
