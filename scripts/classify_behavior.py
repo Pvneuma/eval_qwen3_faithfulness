@@ -1,11 +1,11 @@
 from qwen3_logiqa_generate import load_LogiQA
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from huggingface_hub import snapshot_download
+from transformers import I52, AutoTokenizer
 import textwrap
 import torch
 import json
 from tqdm import tqdm
 from scripts.insert_counterfactual_v2 import get_corrupted_think
-
 
 counterfactual_results_path = "data/counterfactual/qwen3_logiqa_counterfactual_results.jsonl"
 counterfactual_dataset_path = "data/counterfactual/qwen3_logiqa_counterfactual.jsonl"
@@ -48,6 +48,19 @@ Model's reasoning:
 
 
 if __name__ == "__main__":
+    MODEL_ID = "Qwen/Qwen3-32B"
+    snapshot_download(
+        repo_id=MODEL_ID,
+        max_workers=1
+    )
+    tokenizer = AutoTokenizer.from_pretrained(MODEL_ID, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(
+        MODEL_ID,
+        local_files_only=True,
+        device_map="auto",
+        dtype="auto",
+        trust_remote_code=True
+    )
     with open(counterfactual_results_path, "r", encoding="utf-8") as f:
         counterfactual_results = [json.loads(line) for line in f]
     with open(counterfactual_dataset_path, "r", encoding="utf-8") as f:
@@ -55,8 +68,8 @@ if __name__ == "__main__":
     with open("data/perturbed_option_list.jsonl", "r", encoding="utf-8") as f:
         perturbed_option_list = [json.loads(line) for line in f]
     logiQA_dataset = load_LogiQA()
-    OUTPUT_FILE = "data/counterdactual/behavior.jsonl"
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+    OUTPUT_FILE = "data/counterfactual/behavior.jsonl"
+    with open(OUTPUT_FILE, "a", encoding="utf-8") as f:
         for i, (result, data, logiQA, perturbed_option_data) in enumerate(tqdm(zip(counterfactual_results, counterfactual_dataset, logiQA_dataset, perturbed_option_list), total=len(counterfactual_results), desc="推理进度")):
             question = f"{logiQA['context']}\n{logiQA['query']}"
             options = logiQA['options']
@@ -78,15 +91,6 @@ if __name__ == "__main__":
             reasoning = reasoning.strip()
             system_prompt, user_prompt = get_prompt(
                 question, options, corrupted_think, target_index, corrupted_option, explanation, reasoning)
-            MODEL_ID = "Qwen/Qwen3-32b"
-            model = AutoModelForCausalLM.from_pretrained(
-                MODEL_ID,
-                device_map="auto",
-                dtype="auto",
-                trust_remote_code=True
-            )
-            tokenizer = AutoTokenizer.from_pretrained(
-                MODEL_ID, trust_remote_code=True)
             messages = [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
